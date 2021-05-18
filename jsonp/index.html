@@ -21,12 +21,12 @@
 
     // 生成script标签，监听返回结果请求
     function createJsonp(url) {
-      if (!url) {
-        console.warn('请输入接口请求地址');
-        return;
-      }
-
       return new Promise((resolve, reject) => {
+        if (!url) {
+          reject('请输入接口请求地址');
+          return;
+        }
+
         const headElm = document.getElementsByTagName('head')[0];
         const script = document.createElement('script');
         const randomId = genRandomId(10);
@@ -48,6 +48,7 @@
         script.onerror = err => {
           console.warn('接口请求失败', err);
           resetCallback();
+          reject(err);
         }
 
         window[callbackName] = function (data) {
