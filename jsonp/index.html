@@ -1,72 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>实现JSONP请求</title>
 </head>
-
 <body>
-
-  <script async></script>
-
   <script>
 
-    // 生成随机id
-    function genRandomId(length) {
-      return Number(Math.random().toString().substr(3, length) + Date.now()).toString(36);
+    function formatParams(data) {
+      if (!data) return '';
+      const paramsArray = [];
+      for(const item in data) {
+        if (data[item]) {
+          paramsArray.push(`${item}=${data[item]}`)
+        }
+      }
+      if (paramsArray.length) {
+        return paramsArray.join('&')
+      }
+      return '';
+    }
+
+    const defaultOptions = {
+      timeout: 3000,
+      jsonpPrefix: 'jsonp',
+      jsonpCallback: 'callback'
     }
 
     // 生成script标签，监听返回结果请求
-    function createJsonp(url) {
+    function jsonp(url, data = {}, options = {}) {
+      const prefix = options.jsonpPrefix || defaultOptions.jsonpPrefix;
+      const timeout = options.timeout || defaultOptions.timeout;
+      const callback = options.jsonpCallback || defaultOptions.jsonpCallback;
       return new Promise((resolve, reject) => {
         if (!url) {
-          reject('请输入接口请求地址');
+          reject({ success: false, data: undefined, msg: '请输入接口请求地址' });
           return;
         }
-
         const headElm = document.getElementsByTagName('head')[0];
         const script = document.createElement('script');
-        const randomId = genRandomId(10);
-        const callbackName = `Jsonp_${randomId}`
-        url += '?callback=' + callbackName;
-        script.setAttribute('type', 'text/javascript');
+        const randomId = new Date().getTime();
+        const callbackName = `${prefix}_${randomId}`
+        data.callback = callbackName;
+        const queryParams = formatParams(data);
+        url += url.indexOf('?') > -1? '&': '?' + queryParams;
         script.setAttribute('id', randomId);
-        script.setAttribute('async', '');
         script.setAttribute('src', url);
-        headElm.appendChild(script);
-
-        // 加载成功处理
-        script.onload = () => {
-          console.warn('script加载成功');
-          resetCallback();
-        }
-
         // 加载失败处理
         script.onerror = err => {
-          console.warn('接口请求失败', err);
-          resetCallback();
           reject(err);
+          cleanup();
         }
 
         window[callbackName] = function (data) {
-          if (data) {
-            resolve(data)
+          if (data && data.success) {
+            resolve(data);
+            cleanup();
+          } else {
+            reject({ success: false, msg: '服务器开小差了' })
           }
         }
 
+        const jsonpTimeout = setTimeout(() => {
+          reject({ success: false, data: undefined, msg: '接口请求超时啦~' })
+        }, timeout)
+
         // 清理数据
-        function resetCallback() {
-          headElm.removeChild(script);
-          window[callbackName] = undefined;
-          delete window[callbackName];
+        function cleanup() {
+          const script = document.getElementById(randomId);
+          if (script) {
+            headElm.removeChild(script);
+          }
+          if(jsonpTimeout) {
+            clearTimeout(jsonpTimeout);
+          }
+          try {
+            delete window[callbackName];
+          } catch {
+            window[callbackName] = null;
+          }
         }
+        headElm.appendChild(script);
       })
     }
 
-    createJsonp('http://localhost:3000/jsonp').then(res => {
+    jsonp('http://localhost:3000/jsonp').then(res => {
       console.warn('请求结果为 --->', res);
     })
 

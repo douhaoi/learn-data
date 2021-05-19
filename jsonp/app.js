@@ -8,10 +8,10 @@ app.get("/jsonp", (req, res) => {
     res.send(JSON.stringify({ msg: "未传入callback参数" }));
     return;
   }
-  const data = { msg: "我是JSONP请求的返回结果" };
+  const data = { success: true, data: { user_name: 'douhao' }, msg: "请求成功" };
   setTimeout(() => {
     res.send(`${callback}(${JSON.stringify(data)})`);
-  }, 3000);
+  }, 2000);
 });
 
 app.listen(3000, () => {
