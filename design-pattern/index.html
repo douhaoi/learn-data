@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script src="./Observer.js"></script>
+  <script src="./Events.js"></script>
+  <script>
+    const event = new Eventemit();
+    const addTestFn = () => console.log('add-test 事件被触发了')
+    event.on('add-test', addTestFn).off('add-test', addTestFn);
+    event.once('add-test-once', () => console.log('add-test 一次事件被触发了'));
+    event.emit('add-test');
+    event.emit('add-test');
+    event.emit('add-test-once');
+    event.emit('add-test-once');
+  </script>
+</body>
+</html>
