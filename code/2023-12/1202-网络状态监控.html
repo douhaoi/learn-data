@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>网络状态监听</title>
+</head>
+<body>
+  <script>
+    // 获取网络状态
+    function getNetworkState() {
+      return new Promise((resolve, reject) => {
+        if (navigator.onLine) {
+          resolve({
+            type: navigator.connection.effectiveType,
+            downlink: navigator.connection.downlink,
+            rtt: navigator.connection.rtt
+          })
+        } else {
+          resolve({
+            type: 'offline',
+            downlink: 0,
+            rtt: 0
+          })
+        }
+      })
+    }
+
+    // 更新网络状态
+    async function updateNetworkState() {
+      const state = await getNetworkState()
+      console.log(state)
+    }
+
+    window.addEventListener('load', updateNetworkState)
+    // 监听在线状态
+    window.addEventListener('online', updateNetworkState)
+    window.addEventListener('offline', updateNetworkState)
+    // 监听网络链接状态
+    window.navigator.connection.addEventListener('change', updateNetworkState)
+  </script>
+</body>
+</html>
